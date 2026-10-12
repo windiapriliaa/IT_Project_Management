@@ -1,520 +1,992 @@
 <?php
+
 session_start();
 
-if (isset($_SESSION['peran'])) {
-    switch ($_SESSION['peran']) {
-        case 'mahasiswa':
-            header("Location: mahasiswa/dashboard.php");
-            exit;
+include "../koneksi.php";
 
-        case 'dosen':
-            header("Location: dosen/dashboard.php");
-            exit;
-
-        case 'admin_kampus':
-            header("Location: admin_kampus/dashboard.php");
-            exit;
-
-        case 'vendor':
-            header("Location: vendor/dashboard.php");
-            exit;
-
-        case 'admin_sistem':
-            header("Location: admin_sistem/dashboard.php");
-            exit;
-    }
+if (!isset($_SESSION['id_pengguna'])) {
+    header("Location: ../login.php");
+    exit;
 }
+
+$id = $_SESSION['id_pengguna'];
+
+$query = mysqli_query(
+    $koneksi,
+    "SELECT
+        pesan.*,
+        pengirim.nama_lengkap AS nama_pengirim,
+        penerima.nama_lengkap AS nama_penerima
+     FROM pesan
+
+     JOIN pengguna AS pengirim
+     ON pesan.id_pengirim = pengirim.id_pengguna
+
+     JOIN pengguna AS penerima
+     ON pesan.id_penerima = penerima.id_pengguna
+
+     WHERE pesan.id_pengirim = $id
+     OR pesan.id_penerima = $id
+
+     ORDER BY pesan.waktu_kirim DESC"
+);
+
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>UIN Kampus Care</title>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Pesan - UIN Kampus Care
+    </title>
+
+    <!-- PENTING: style.css, bukan ztyle.css -->
+    <link
+        rel="stylesheet"
+        href="../css/style.css">
+
 
     <style>
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
+
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: linear-gradient(135deg, #eef4ff, #f8fbff);
+            margin: 0;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background: #f5f7fb;
+
             color: #1e293b;
-            min-height: 100vh;
         }
 
-        /* =========================
+
+        /* ================================
            NAVBAR
-        ========================= */
+        ================================= */
 
-        .navbar {
-            width: 100%;
+        .topbar {
+
             height: 70px;
+
             background: white;
+
+            border-bottom:
+                1px solid #e2e8f0;
+
             display: flex;
+
             align-items: center;
+
             justify-content: space-between;
+
             padding: 0 7%;
-            box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 10;
         }
 
-        .logo {
+
+        .brand {
+
             display: flex;
+
             align-items: center;
-            gap: 10px;
-            font-size: 21px;
-            font-weight: bold;
-            color: #1746a2;
+
+            gap: 12px;
         }
 
-        .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: #1746a2;
-            color: white;
-            border-radius: 10px;
+
+        .brand-icon {
+
+            width: 42px;
+
+            height: 42px;
+
             display: flex;
+
             align-items: center;
+
             justify-content: center;
-            font-size: 21px;
+
+            background:
+                linear-gradient(135deg,
+                    #2563eb,
+                    #1d4ed8);
+
+            color: white;
+
+            border-radius: 11px;
+
+            font-size: 20px;
         }
 
-        .nav-text {
-            font-size: 14px;
-            color: #64748b;
-        }
 
-        /* =========================
-           HERO
-        ========================= */
+        .brand-text h2 {
 
-        .hero {
-            text-align: center;
-            padding: 70px 20px 40px;
-        }
+            margin: 0;
 
-        .badge {
-            display: inline-block;
-            background: #dbeafe;
-            color: #1746a2;
-            padding: 8px 18px;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: bold;
-            margin-bottom: 20px;
-        }
-
-        .hero h1 {
-            font-size: 46px;
-            line-height: 1.2;
-            color: #0f2f6b;
-            margin-bottom: 15px;
-        }
-
-        .hero h1 span {
-            color: #2563eb;
-        }
-
-        .hero p {
-            max-width: 650px;
-            margin: auto;
             font-size: 17px;
-            line-height: 1.7;
+
+            color: #0f172a;
+        }
+
+
+        .brand-text span {
+
+            font-size: 11px;
+
             color: #64748b;
         }
 
-        /* =========================
-           ROLE
-        ========================= */
 
-        .content {
-            max-width: 1100px;
-            margin: 0 auto;
-            padding: 20px;
+        .user-area {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
         }
 
-        .section-title {
-            text-align: center;
+
+        .user-info {
+
+            text-align: right;
+        }
+
+
+        .user-info strong {
+
+            display: block;
+
+            font-size: 13px;
+
+            color: #0f172a;
+        }
+
+
+        .user-info span {
+
+            font-size: 11px;
+
+            color: #64748b;
+        }
+
+
+        .back-btn {
+
+            text-decoration: none;
+
+            padding: 9px 14px;
+
+            border-radius: 8px;
+
+            background: #eff6ff;
+
+            color: #2563eb;
+
+            font-size: 12px;
+
+            font-weight: bold;
+        }
+
+
+        .back-btn:hover {
+
+            background: #dbeafe;
+        }
+
+
+        .logout-btn {
+
+            text-decoration: none;
+
+            padding: 9px 14px;
+
+            border-radius: 8px;
+
+            background: #fee2e2;
+
+            color: #dc2626;
+
+            font-size: 12px;
+
+            font-weight: bold;
+        }
+
+
+        .logout-btn:hover {
+
+            background: #fecaca;
+        }
+
+
+        /* ================================
+           CONTENT
+        ================================= */
+
+        .page-content {
+
+            width: 90%;
+
+            max-width: 1100px;
+
+            margin: auto;
+
+            padding: 40px 0 60px;
+        }
+
+
+        /* ================================
+           HEADER
+        ================================= */
+
+        .page-header {
+
             margin-bottom: 25px;
         }
 
-        .section-title h2 {
-            font-size: 24px;
-            color: #1e293b;
-            margin-bottom: 7px;
+
+        .page-header h1 {
+
+            margin: 0 0 8px;
+
+            font-size: 28px;
+
+            color: #0f172a;
         }
 
-        .section-title p {
-            color: #64748b;
-            font-size: 14px;
-        }
 
-        .role-container {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-        }
+        .page-header p {
 
-        .role-card {
-            background: white;
-            border-radius: 18px;
-            padding: 25px;
-            text-decoration: none;
-            color: inherit;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.06);
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
+            margin: 0;
 
-        .role-card::before {
-            content: "";
-            position: absolute;
-            width: 100%;
-            height: 4px;
-            background: #2563eb;
-            top: 0;
-            left: 0;
-        }
-
-        .role-card:hover {
-            transform: translateY(-7px);
-            box-shadow: 0 15px 35px rgba(37, 99, 235, 0.15);
-            border-color: #93c5fd;
-        }
-
-        .role-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 15px;
-            background: #eff6ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 30px;
-            margin-bottom: 18px;
-        }
-
-        .role-card h3 {
-            font-size: 18px;
-            color: #1e3a8a;
-            margin-bottom: 8px;
-        }
-
-        .role-card p {
             font-size: 13px;
+
+            color: #64748b;
+
             line-height: 1.6;
-            color: #64748b;
-            min-height: 42px;
         }
 
-        .login-link {
-            display: inline-block;
-            margin-top: 17px;
+
+        /* ================================
+           MESSAGE CARD
+        ================================= */
+
+        .message-card {
+
+            background: white;
+
+            border:
+                1px solid #e2e8f0;
+
+            border-radius: 18px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 8px 25px rgba(15, 23, 42, 0.05);
+        }
+
+
+        .message-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 20px 25px;
+
+            border-bottom:
+                1px solid #e2e8f0;
+        }
+
+
+        .message-header h2 {
+
+            margin: 0;
+
+            font-size: 17px;
+
+            color: #0f172a;
+        }
+
+
+        .message-header span {
+
+            font-size: 11px;
+
+            color: #94a3b8;
+        }
+
+
+        /* ================================
+           TABLE
+        ================================= */
+
+        .table-wrapper {
+
+            overflow-x: auto;
+        }
+
+
+        table {
+
+            width: 100%;
+
+            min-width: 750px;
+
+            border-collapse: collapse;
+        }
+
+
+        th {
+
+            padding: 14px 18px;
+
+            background: #f8fafc;
+
+            color: #475569;
+
+            font-size: 11px;
+
+            text-align: left;
+
+            border-bottom:
+                1px solid #e2e8f0;
+        }
+
+
+        td {
+
+            padding: 17px 18px;
+
+            font-size: 12px;
+
+            color: #475569;
+
+            border-bottom:
+                1px solid #f1f5f9;
+
+            vertical-align: top;
+        }
+
+
+        tbody tr {
+
+            transition: 0.15s;
+        }
+
+
+        tbody tr:hover {
+
+            background: #f8fafc;
+        }
+
+
+        tbody tr:last-child td {
+
+            border-bottom: none;
+        }
+
+
+        /* ================================
+           PERSON
+        ================================= */
+
+        .person {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            min-width: 150px;
+        }
+
+
+        .avatar {
+
+            width: 34px;
+
+            height: 34px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #dbeafe;
+
             color: #2563eb;
-            font-size: 13px;
+
+            font-size: 14px;
+
             font-weight: bold;
         }
 
-        /* =========================
-           INFO
-        ========================= */
 
-        .info-box {
-            max-width: 900px;
-            margin: 45px auto 0;
-            background: white;
-            border-radius: 18px;
-            padding: 25px 30px;
-            border: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            box-shadow: 0 8px 25px rgba(15, 23, 42, 0.05);
+        .person-name {
+
+            color: #0f172a;
+
+            font-weight: 600;
+
+            font-size: 12px;
         }
 
-        .info-icon {
-            font-size: 35px;
+
+        .person-label {
+
+            display: block;
+
+            color: #94a3b8;
+
+            font-size: 9px;
+
+            margin-top: 2px;
         }
 
-        .info-box h3 {
-            font-size: 17px;
-            margin-bottom: 5px;
-            color: #1e293b;
-        }
 
-        .info-box p {
-            font-size: 13px;
-            color: #64748b;
+        /* ================================
+           MESSAGE
+        ================================= */
+
+        .message-content {
+
+            max-width: 400px;
+
             line-height: 1.6;
+
+            color: #475569;
+
+            background: #f8fafc;
+
+            padding: 10px 13px;
+
+            border-radius: 10px;
+
+            border:
+                1px solid #f1f5f9;
         }
 
-        /* =========================
-           FOOTER
-        ========================= */
 
-        footer {
-            margin-top: 70px;
-            background: #0f2f6b;
-            color: white;
+        /* ================================
+           TIME
+        ================================= */
+
+        .time {
+
+            color: #64748b;
+
+            font-size: 11px;
+
+            white-space: nowrap;
+        }
+
+
+        /* ================================
+           EMPTY STATE
+        ================================= */
+
+        .empty-state {
+
+            padding: 70px 25px;
+
             text-align: center;
-            padding: 25px;
         }
 
-        footer strong {
+
+        .empty-icon {
+
+            width: 70px;
+
+            height: 70px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            margin: 0 auto 15px;
+
+            background: #eff6ff;
+
+            border-radius: 50%;
+
+            font-size: 30px;
+        }
+
+
+        .empty-state h3 {
+
+            margin: 0 0 7px;
+
+            color: #334155;
+
             font-size: 16px;
         }
 
-        footer p {
-            margin-top: 7px;
+
+        .empty-state p {
+
+            max-width: 420px;
+
+            margin: auto;
+
+            color: #94a3b8;
+
             font-size: 12px;
-            color: #cbd5e1;
+
+            line-height: 1.6;
         }
 
-        /* =========================
+
+        /* ================================
+           FOOTER
+        ================================= */
+
+        .footer {
+
+            text-align: center;
+
+            padding: 25px;
+
+            color: #94a3b8;
+
+            font-size: 11px;
+        }
+
+
+        /* ================================
            RESPONSIVE
-        ========================= */
+        ================================= */
 
-        @media (max-width: 850px) {
+        @media (max-width: 750px) {
 
-            .role-container {
-                grid-template-columns: repeat(2, 1fr);
+            .topbar {
+
+                height: auto;
+
+                padding: 15px 20px;
+
+                gap: 12px;
+
+                flex-wrap: wrap;
             }
 
-            .hero h1 {
-                font-size: 38px;
-            }
-        }
 
-        @media (max-width: 600px) {
+            .user-info {
 
-            .navbar {
-                padding: 0 20px;
-            }
-
-            .nav-text {
                 display: none;
             }
 
-            .hero {
-                padding-top: 50px;
+
+            .page-content {
+
+                width: 92%;
+
+                padding-top: 25px;
             }
 
-            .hero h1 {
-                font-size: 32px;
+
+            .page-header h1 {
+
+                font-size: 23px;
             }
 
-            .hero p {
-                font-size: 15px;
-            }
-
-            .role-container {
-                grid-template-columns: 1fr;
-            }
-
-            .info-box {
-                align-items: flex-start;
-            }
         }
     </style>
+
 </head>
+
 
 <body>
 
-    <!-- NAVBAR -->
-    <nav class="navbar">
 
-        <div class="logo">
-            <div class="logo-icon">🏫</div>
-            <span>UIN Kampus Care</span>
-        </div>
+    <!-- =================================
+     NAVBAR
+================================= -->
 
-        <div class="nav-text">
-            Sistem Pelayanan Kampus
-        </div>
-
-    </nav>
+    <header class="topbar">
 
 
-    <!-- HERO -->
-    <section class="hero">
+        <div class="brand">
 
-        <div class="badge">
-            ✨ Layanan Digital Kampus
-        </div>
-
-        <h1>
-            Selamat Datang di<br>
-            <span>UIN Kampus Care</span>
-        </h1>
-
-        <p>
-            Platform untuk menyampaikan laporan, usulan,
-            dan kebutuhan pelayanan kampus secara mudah,
-            cepat, dan terorganisir.
-        </p>
-
-    </section>
-
-
-    <!-- ROLE -->
-    <main class="content">
-
-        <div class="section-title">
-            <h2>Pilih Peran Anda</h2>
-            <p>Silakan pilih peran untuk masuk ke dalam sistem</p>
-        </div>
-
-
-        <div class="role-container">
-
-            <!-- MAHASISWA -->
-            <a href="login.php?peran=mahasiswa" class="role-card">
-
-                <div class="role-icon">
-                    🎓
-                </div>
-
-                <h3>Mahasiswa</h3>
-
-                <p>
-                    Laporkan kerusakan fasilitas,
-                    masalah lingkungan, atau kebutuhan
-                    pelayanan kampus.
-                </p>
-
-                <span class="login-link">
-                    Masuk sebagai Mahasiswa →
-                </span>
-
-            </a>
-
-
-            <!-- DOSEN -->
-            <a href="login.php?peran=dosen" class="role-card">
-
-                <div class="role-icon">
-                    👨‍🏫
-                </div>
-
-                <h3>Dosen & Staff</h3>
-
-                <p>
-                    Sampaikan usulan, laporan fasilitas,
-                    dan kebutuhan pelayanan kampus.
-                </p>
-
-                <span class="login-link">
-                    Masuk sebagai Dosen & Staff →
-                </span>
-
-            </a>
-
-
-            <!-- ADMIN KAMPUS -->
-            <a href="login.php?peran=admin_kampus" class="role-card">
-
-                <div class="role-icon">
-                    🏢
-                </div>
-
-                <h3>Admin Kampus</h3>
-
-                <p>
-                    Kelola laporan dan pantau proses
-                    penyelesaian masalah di lingkungan kampus.
-                </p>
-
-                <span class="login-link">
-                    Masuk sebagai Admin →
-                </span>
-
-            </a>
-
-
-            <!-- VENDOR -->
-            <a href="login.php?peran=vendor" class="role-card">
-
-                <div class="role-icon">
-                    🔧
-                </div>
-
-                <h3>Vendor</h3>
-
-                <p>
-                    Kelola layanan dan informasi pekerjaan
-                    yang berkaitan dengan kebutuhan kampus.
-                </p>
-
-                <span class="login-link">
-                    Masuk sebagai Vendor →
-                </span>
-
-            </a>
-
-
-            <!-- ADMIN SISTEM -->
-            <a href="login.php?peran=admin_sistem" class="role-card">
-
-                <div class="role-icon">
-                    ⚙️
-                </div>
-
-                <h3>Admin Sistem</h3>
-
-                <p>
-                    Kelola pengguna, sistem, dan aktivitas
-                    aplikasi UIN Kampus Care.
-                </p>
-
-                <span class="login-link">
-                    Masuk sebagai Admin Sistem →
-                </span>
-
-            </a>
-
-        </div>
-
-
-        <!-- INFO -->
-        <div class="info-box">
-
-            <div class="info-icon">
-                💡
+            <div class="brand-icon">
+                💬
             </div>
 
-            <div>
-                <h3>Butuh bantuan?</h3>
 
-                <p>
-                    Pilih peran sesuai dengan akun Anda.
-                    Setelah masuk, Anda dapat menggunakan
-                    fitur yang tersedia sesuai hak akses.
-                </p>
+            <div class="brand-text">
+
+                <h2>
+                    UIN Kampus Care
+                </h2>
+
+                <span>
+                    Pusat Pesan
+                </span>
+
             </div>
 
         </div>
+
+
+        <div class="user-area">
+
+
+            <div class="user-info">
+
+                <strong>
+                    <?= htmlspecialchars(
+                        $_SESSION['nama_lengkap']
+                    ) ?>
+                </strong>
+
+                <span>
+                    <?= htmlspecialchars(
+                        ucfirst(
+                            str_replace(
+                                '_',
+                                ' ',
+                                $_SESSION['peran']
+                            )
+                        )
+                    ) ?>
+                </span>
+
+            </div>
+
+
+            <a
+                href="../index.php"
+                class="back-btn">
+                🏠 Beranda
+            </a>
+
+
+            <a
+                href="../logout.php"
+                class="logout-btn">
+                Keluar
+            </a>
+
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =================================
+     CONTENT
+================================= -->
+
+    <main class="page-content">
+
+
+        <div class="page-header">
+
+            <h1>
+                💬 Pesan
+            </h1>
+
+            <p>
+                Lihat komunikasi antara kamu dengan
+                pengguna lain di UIN Kampus Care.
+            </p>
+
+        </div>
+
+
+
+        <!-- MESSAGE CARD -->
+
+        <div class="message-card">
+
+
+            <div class="message-header">
+
+                <h2>
+                    Riwayat Pesan
+                </h2>
+
+                <span>
+                    Pesan terbaru ditampilkan di atas
+                </span>
+
+            </div>
+
+
+
+            <?php if (
+                $query &&
+                mysqli_num_rows($query) > 0
+            ): ?>
+
+
+                <div class="table-wrapper">
+
+                    <table>
+
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Pengirim
+                                </th>
+
+                                <th>
+                                    Penerima
+                                </th>
+
+                                <th>
+                                    Isi Pesan
+                                </th>
+
+                                <th>
+                                    Waktu
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody>
+
+
+                            <?php
+
+                            while (
+                                $data =
+                                mysqli_fetch_assoc($query)
+                            ):
+
+                                $nama_pengirim =
+                                    $data['nama_pengirim'];
+
+                                $inisial =
+                                    strtoupper(
+                                        substr(
+                                            $nama_pengirim,
+                                            0,
+                                            1
+                                        )
+                                    );
+
+                            ?>
+
+
+                                <tr>
+
+
+                                    <!-- PENGIRIM -->
+
+                                    <td>
+
+                                        <div class="person">
+
+                                            <div class="avatar">
+
+                                                <?= htmlspecialchars(
+                                                    $inisial
+                                                ) ?>
+
+                                            </div>
+
+
+                                            <div>
+
+                                                <div
+                                                    class="person-name">
+
+                                                    <?= htmlspecialchars(
+                                                        $nama_pengirim
+                                                    ) ?>
+
+                                                </div>
+
+                                                <span
+                                                    class="person-label">
+                                                    Pengirim
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+
+
+                                    <!-- PENERIMA -->
+
+                                    <td>
+
+                                        <div class="person">
+
+                                            <div class="avatar">
+
+                                                <?= htmlspecialchars(
+                                                    strtoupper(
+                                                        substr(
+                                                            $data['nama_penerima'],
+                                                            0,
+                                                            1
+                                                        )
+                                                    )
+                                                ) ?>
+
+                                            </div>
+
+
+                                            <div>
+
+                                                <div
+                                                    class="person-name">
+
+                                                    <?= htmlspecialchars(
+                                                        $data['nama_penerima']
+                                                    ) ?>
+
+                                                </div>
+
+                                                <span
+                                                    class="person-label">
+                                                    Penerima
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+
+
+                                    <!-- PESAN -->
+
+                                    <td>
+
+                                        <div
+                                            class="message-content">
+
+                                            <?= nl2br(
+                                                htmlspecialchars(
+                                                    $data['isi_pesan']
+                                                )
+                                            ) ?>
+
+                                        </div>
+
+                                    </td>
+
+
+
+                                    <!-- WAKTU -->
+
+                                    <td>
+
+                                        <span
+                                            class="time">
+
+                                            🕒
+                                            <?= date(
+                                                'd/m/Y H:i',
+                                                strtotime(
+                                                    $data['waktu_kirim']
+                                                )
+                                            ) ?>
+
+                                        </span>
+
+                                    </td>
+
+
+                                </tr>
+
+
+                            <?php endwhile; ?>
+
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+            <?php else: ?>
+
+
+                <!-- EMPTY STATE -->
+
+                <div class="empty-state">
+
+                    <div class="empty-icon">
+                        💬
+                    </div>
+
+
+                    <h3>
+                        Belum Ada Pesan
+                    </h3>
+
+
+                    <p>
+                        Belum ada percakapan yang tersedia.
+                        Pesan yang kamu kirim atau terima
+                        akan muncul di halaman ini.
+                    </p>
+
+                </div>
+
+
+            <?php endif; ?>
+
+
+        </div>
+
 
     </main>
 
 
-    <!-- FOOTER -->
-    <footer>
 
-        <strong>UIN Kampus Care</strong>
+    <footer class="footer">
 
-        <p>
-            © 2026 UIN Kampus Care • Sistem Pelayanan Digital Kampus
-        </p>
+        © 2026 UIN Kampus Care
+        • Pusat Pesan
 
     </footer>
+
 
 </body>
 
